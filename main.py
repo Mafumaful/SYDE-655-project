@@ -11,6 +11,8 @@ plotter = Plotter(t)
 
 
 if __name__ == "__main__":
-    for i in range(len(t)):
+    for i in range(len(t)+1):
         plotter.record(i, legend="time", plot_name="plot the time")
-    plotter.print_loud()
+        plotter.record(i, legend="time", plot_name="plot")
+        plotter.record(20, legend="20", plot_name="plot the time")
+    plotter.save_graph()
