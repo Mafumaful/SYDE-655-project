@@ -7,11 +7,11 @@ import numpy as np
 
 class Vehicle1D():
     def __init__(self, state):
-        self.sx = ca.MX.sym('x')
-        self.sv = ca.MX.sym('v')
-        self.sa = ca.MX.sym('a')
-        self.st = ca.MX.sym('t')
-        self.su = ca.MX.sym('u')
+        self.sx = ca.SX.sym('x')
+        self.sv = ca.SX.sym('v')
+        self.sa = ca.SX.sym('a')
+        self.st = ca.SX.sym('t')
+        self.su = ca.SX.sym('u')
 
         self.x = state[0]
         self.v = state[1]
