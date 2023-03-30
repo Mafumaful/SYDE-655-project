@@ -20,7 +20,7 @@ class Plotter(object):
             self.dictionarys[plot_name][legend].append(record_value)
 
     def save_graph(self):
-        print("save the graph...")
+        print("saving the graph...")
         for key, value in self.dictionarys.items():
             plt.figure()
             for legend, data in value.items():
