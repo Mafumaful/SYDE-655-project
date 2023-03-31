@@ -13,7 +13,7 @@ class MPC_ACC_controller():
         self.a = initial_state[2]
 
         # prediction horizon
-        P = 10
+        P_horizon = 10
 
         # setting the weights of the system
         Q_x = 1
@@ -36,9 +36,33 @@ class MPC_ACC_controller():
         sx = ca.SX.sym('x')
         sv = ca.SX.sym('v')
         sa = ca.SX.sym('a')
-
+        # define the states of the system
         states = ca.vertcat(sx, sv, sa)
         n_states = states.numel()
+
+        # matrix containing all states over all time steps
+        X = ca.SX.sym('X', n_states, P_horizon + 1)
+        # matrix containing all control actions over all time steps
+        U = ca.SX.sym('U', 1, P_horizon)
+        # coloumn vector for storing initial state and target state
+        P = ca.SX.sym('P', n_states + n_states)
+        # state weights matrix (Qx,Qv,Qa)
+        Q = ca.diag(Q_x, Q_v, Q_a)
+        # control weights matrix (Ru)
+        R = ca.diag(R_u)
+
+        # define the right hand side of the system
+        # >>>>>>>>>>>>>>>>>>>>>>>
+        # to be continued
+        # >>>>>>>>>>>>>>>>>>>>>>>
+
+        # define the cost
+        cost = 0
+        g = X[:, 0] - P[:n_states]
+
+        # define the objective function
+        for i in range(P_horizon):
+            pass
 
         # define the nonlinear problem option
         opts = {
@@ -52,16 +76,16 @@ class MPC_ACC_controller():
         }
 
         # define the bounds of the system
-        lbx[0:n_states*(P+1):n_states] = x_min
-        ubx[0:n_states*(P+1):n_states] = x_max
-        lbx[1:n_states*(P+1):n_states] = v_min
-        ubx[1:n_states*(P+1):n_states] = v_max
-        lbx[2:n_states*(P+1):n_states] = u_min
-        ubx[2:n_states*(P+1):n_states] = u_max
+        lbx[0:n_states*(P_horizon+1):n_states] = x_min
+        ubx[0:n_states*(P_horizon+1):n_states] = x_max
+        lbx[1:n_states*(P_horizon+1):n_states] = v_min
+        ubx[1:n_states*(P_horizon+1):n_states] = v_max
+        lbx[2:n_states*(P_horizon+1):n_states] = u_min
+        ubx[2:n_states*(P_horizon+1):n_states] = u_max
 
         # define the bounds of the control input
-        lbx[n_states*(P+1):] = u_min
-        ubx[n_states*(P+1):] = u_max
+        lbx[n_states*(P_horizon+1):] = u_min
+        ubx[n_states*(P_horizon+1):] = u_max
 
     # update control input
     def update():
