@@ -12,6 +12,9 @@ class MPC_ACC_controller():
         self.v = initial_state[1]
         self.a = initial_state[2]
 
+        # define the safe distance rate
+        self.k = 3
+
         # prediction horizon
         P_horizon = 10
 
@@ -47,14 +50,15 @@ class MPC_ACC_controller():
         # coloumn vector for storing initial state and target state
         P = ca.SX.sym('P', n_states + n_states)
         # state weights matrix (Qx,Qv,Qa)
-        Q = ca.diag(Q_x, Q_v, Q_a)
+        Q = ca.diagcat(Q_x, Q_v, Q_a)
         # control weights matrix (Ru)
-        R = ca.diag(R_u)
+        R = ca.diagcat(R_u)
 
         # define the right hand side of the system
-        # >>>>>>>>>>>>>>>>>>>>>>>
-        # to be continued
-        # >>>>>>>>>>>>>>>>>>>>>>>
+        # RHS is the increment of the state
+        RHS = 0
+        f = ca.Function('f', [states, U], [RHS],
+                        ['states', 'controls'], ['RHS'])
 
         # define the cost
         cost = 0
@@ -62,7 +66,30 @@ class MPC_ACC_controller():
 
         # define the objective function
         for i in range(P_horizon):
-            pass
+            current_state = X[:, i]
+            current_control = U[:, i]
+            cost = cost\
+                + (current_state - P[:n_states]).T @ Q @ (current_state - P[:n_states])\
+                + current_control.T @ R @ current_control
+            next_state = X[:, i + 1]
+
+            # runge kutta
+            k1 = f(current_state, current_control)
+            k2 = f(current_state + step_time / 2 * k1, current_control)
+            k3 = f(current_state + step_time / 2 * k2, current_control)
+            k4 = f(current_state + step_time * k3, current_control)
+            x_next_rk4 = current_state + (k1 + 2 * k2 + 2 * k3 + k4) / 6
+            g = ca.vertcat(g, next_state - x_next_rk4)
+
+        OPT_variables = ca.vertcat(ca.reshape(X, -1, 1), ca.reshape(U, -1, 1))
+
+        # define the nonlinear problem
+        nlp_prob = {
+            'f': cost,
+            'x': OPT_variables,
+            'g': g,
+            'p': P
+        }
 
         # define the nonlinear problem option
         opts = {
@@ -75,7 +102,13 @@ class MPC_ACC_controller():
             'print_time': 0
         }
 
+        # create the solver
+        self.solver = ca.nlpsol('solver', 'ipopt', nlp_prob, opts)
+
         # define the bounds of the system
+        lbx = ca.DM.zeros((n_states*(P_horizon+1) + P_horizon, 1))
+        ubx = ca.DM.zeros((n_states*(P_horizon+1) + P_horizon, 1))
+
         lbx[0:n_states*(P_horizon+1):n_states] = x_min
         ubx[0:n_states*(P_horizon+1):n_states] = x_max
         lbx[1:n_states*(P_horizon+1):n_states] = v_min
@@ -87,6 +120,18 @@ class MPC_ACC_controller():
         lbx[n_states*(P_horizon+1):] = u_min
         ubx[n_states*(P_horizon+1):] = u_max
 
+        # define the initial value of the system
+        self.t0 = ca.DM(0)
+        self.state_init = ca.DM(initial_state)
+        # relative distance, velocity and acceleration
+        self.state_target = ca.DM([k*initial_state[1], 0, 0])
+
+        self.u0 = ca.DM.zeros((P_horizon, 1))
+        self.x0 = ca.repmat(ca.DM(initial_state), P_horizon+1, 1)  # check this
+
     # update control input
-    def update():
-        pass
+    def update(self, current_state):
+        u = 0
+        return u
+
+    # now we need to implement the transfer function of the system and update the control loop for this controller

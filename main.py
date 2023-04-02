@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 # import the modules
 from plot import Plotter
@@ -15,10 +16,10 @@ t = np.arange(0, t_end, t_cont)
 plotter = Plotter(t)
 
 # initialize the controller
-controller = MPC_ACC_controller()
+# controller = MPC_ACC_controller(t_s)
 
 # initialize the model, the initial position of the vehicle is 10m, velocity is constant which is 10m/s
-target_vehicle = Vehicle1D([10, 10, 0])
+target_vehicle = Vehicle1D([0, 0, 0])
 # initialize the host vehicle, the initial position of the vehicle is 0m
 host_vehicle = Vehicle1D([0, 0, 0])
 
@@ -37,7 +38,8 @@ def record_target(state, name):
 # main loop
 if __name__ == "__main__":
     for i in range(len(t)+1):
-        target_vehicle.update(0, t_cont)
+        # create a random acceleration
+        target_vehicle.update(1, t_cont)
 
         # plot
         record_target(target_vehicle.get_state(), "target vehicle state")
