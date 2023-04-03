@@ -46,7 +46,7 @@ distance from the vehicle in front, especially in heavy traffic or on long trips
 the advancement of commercial radar, lidar, and camera technologies, the popularity of 
 ACC systems has increased.
 
-Although Model Predictive Control (MPC) is a popular method for solving the ACC problem, 
+Although Model Predictive Control (MPC)~\cite{rawlings2012postface} is a popular method for solving the ACC problem, 
 it still presents challenges due to the computational load involved in solving large-scale 
 optimization problems. Therefore, this paper proposes a method to linearize the ACC system 
 model and use the powerful CasADi toolbox\cite{Andersson2018} for solving the optimal control 
@@ -113,8 +113,8 @@ both the desired inter-vehicle distance $d_r$ and the minimum inter-vehicle dist
 
 \noindent where $T_{hw}$ is the headway time, $d_0$ is the minimum inter-vehicle distance.
 
-In this paper, the state variables of the ACC system are as $x=[\Delta d,\Delta v,\dot{v_h}]^T$, the
-state-space model is formulated as:
+In this paper, the state variables of the ACC system are as $x=[\Delta d,\Delta v,x_f^T]^T$, 
+$x\in \mathbb{R}^{2+n_f}$, the state-space model is formulated as (\ref{eq:state_space_model}):
 
 \begin{equation}
     \left\{\begin{array}{l}\label{eq:state_space_model}
@@ -147,11 +147,70 @@ $f_{a c t}(x,u)=\left[\begin{array}{c}
     \end{array}\right]$. 
 
 \noindent where $u \in \mathbb{R}$ is the input of the plant and 
-$y = [\Delta d, \Delta v, \dot{v_h}]^T \in \mathbb{R}^3$ is the output of the plant.
+$y = [\Delta d, \Delta v, \dot{v_h}]^T \in \mathbb{R}^{3}$ is the output of the plant.
 
 \section{Optimal-based Control Method}
+
+\subsection{Controller Model Design}
+In order to reduce the computational cost, the ACC system model is linearized as (\ref{eq:linearized_model}):
+
+\begin{equation}
+    \left\{\begin{array}{l}\label{eq:linearized_model}
+        \dot{a_f}=A_f(t)a_f+B_f(t)u \\
+        a_f=C_fx_f
+        \end{array}\right.
+\end{equation}
+
+\noindent where the acceleration of the linearized model is $a_f\in \mathbb{R}$, the input of the
+linearized model is $u$, the output of the linearized model is $a_f$ and $A_f(t)$, $B_f(t)$, $C_f$ are
+shown as (\ref{eq:linearized_m}):
+
+\begin{equation}
+    \begin{array}{l}\label{eq:linearized_m}
+    A_{f}(t)=\left\{\begin{array}{ll}
+    -\frac{1}{T_{e n g}}, & \text { if } u(t) \geq a_{t h r_{-} o f f} \\
+    -\frac{1}{T_{b r k}}, & \text { if } u(t)<a_{t h r_{-} o f f}
+    \end{array}\right. \\
+    B_{f}(t)=\left\{\begin{array}{ll}
+    \frac{K_{e n g}(t)}{T_{e n g}}, & \text { if } u(t) \geq a_{t h r_{-} o f f} \\
+    \frac{K_{b r k}(t)}{T_{b r k}}, & \text { if } u(t)<a_{t h r_{-} o f f}
+    \end{array}\right. \\
+    C_{f}=1 .
+    \end{array}
+\end{equation}
+
+\noindent where $T_{e n g}$ is the constant of acceleration of acceleration engine, 
+$T_{b r k}$ is time constant of deceleration using brake, $a_{t h r_{-} o f f}$ is the threshold
+of acceleration, $K_{e n g}(t)$ and $K_{b r k}(t)$ are the gain of acceleration engine and brake
+respectively.
+
+In the system (\ref{eq:linearized_model}), the dynamics of the vehicle is simplified as a first-order
+delay system. The system has two modes:a acceleration mode and a deceleration mode. 
+
+So the prediction model (\ref{eq:state_space_model}) can be simplified as (\ref{eq:prediction_m}).
+
+\begin{equation}
+    \left\{\begin{array}{l}\label{eq:prediction_m}
+        \dot{x}=A(t)x+B(t)u+Gv+Hw \\
+        y=Cx+Jv
+        \end{array}\right.
+\end{equation}
+
+\noindent where $x \in \mathbb{R}^3$ and $A(t)=\left[\begin{array}{ccc}
+    0 & 1 & -T_{h w} \\
+    0 & 0 & -1 \\
+    0 & 0 & A_{f}(t)
+    \end{array}\right], \quad B(t)=\left[\begin{array}{c}
+    0 \\
+    0 \\
+    B_{f}(t)
+    \end{array}\right]$.
+\subsection{Optimization Problem}
+
 \section{Preliminary Results}
 \section{Conclusion}
+
+In this paper, we proposed a MPC controller for ACC system.
 
 \bibliographystyle{unsrt}
 \bibliography{citation}
