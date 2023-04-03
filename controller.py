@@ -39,9 +39,22 @@ class MPC_ACC_controller():
         sx = ca.SX.sym('x')
         sv = ca.SX.sym('v')
         sa = ca.SX.sym('a')
+        su = ca.SX.sym('u')
         # define the states of the system
         states = ca.vertcat(sx, sv, sa)
         n_states = states.numel()
+
+        # define the state space matrix, it's the most important part of the model
+        # A matrix
+        self.A = ca.DM([
+            [0, 1, -1.6],
+            [0, 0, -1],
+            [0, 0, -2.17391304]
+        ])
+        # B matrix
+        self.B = ca.DM([0, 0, -1.59130435])
+        # C matrix
+        self.C = ca.DM.eye(3)
 
         # matrix containing all states over all time steps
         X = ca.SX.sym('X', n_states, P_horizon + 1)
@@ -56,8 +69,10 @@ class MPC_ACC_controller():
 
         # define the right hand side of the system
         # RHS is the increment of the state
-        RHS = 0
-        f = ca.Function('f', [states, U], [RHS],
+        increment = \
+            self.A @ states @ self.step_time + self.B @ su @ self.step_time
+        # define the function
+        f = ca.Function('f', [states, su], [increment],
                         ['states', 'controls'], ['RHS'])
 
         # define the cost
@@ -73,7 +88,7 @@ class MPC_ACC_controller():
                 + current_control.T @ R @ current_control
             next_state = X[:, i + 1]
 
-            # runge kutta
+            # runge kutta 4th order
             k1 = f(current_state, current_control)
             k2 = f(current_state + step_time / 2 * k1, current_control)
             k3 = f(current_state + step_time / 2 * k2, current_control)

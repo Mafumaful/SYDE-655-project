@@ -1,10 +1,17 @@
 \begin{thebibliography}{1}
 
-\bibitem{1337334}
-V.L. Bageshwar, W.L. Garrard, and R.~Rajamani.
-\newblock Model predictive control of transitional maneuvers for adaptive
-  cruise control vehicles.
-\newblock {\em IEEE Transactions on Vehicular Technology}, 53(5):1573--1585,
-  2004.
+\bibitem{Andersson2018}
+Joel A~E Andersson, Joris Gillis, Greg Horn, James~B Rawlings, and Moritz
+  Diehl.
+\newblock {CasADi} -- {A} software framework for nonlinear optimization and
+  optimal control.
+\newblock {\em Mathematical Programming Computation}, In Press, 2018.
+
+\bibitem{Takahama}
+Taku Takahama and Daisuke Akasaka.
+\newblock Model predictive control approach to design practical adaptive cruise
+  control for traffic jam.
+\newblock {\em International Journal of Automotive Engineering}, 9(3):99--104,
+  2018.
 
 \end{thebibliography}

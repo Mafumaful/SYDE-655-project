@@ -6,7 +6,7 @@ import numpy as np
 
 
 class Vehicle1D():
-    def __init__(self, state):
+    def __init__(self, state=[0, 0, 0]):
         # define the initial states
         self.x = state[0]
         self.v = state[1]
