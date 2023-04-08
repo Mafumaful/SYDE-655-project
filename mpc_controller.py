@@ -1,9 +1,10 @@
 import casadi as ca
+from time import time
 
 
 class mpc_controller():
     def __init__(self, sampling_time=0.1):
-        from time import time
+        self.times = []
 
         # MPC variables
         self.N = 10  # prediction horizon
@@ -122,6 +123,8 @@ class mpc_controller():
         self.args = {'lbx': lbx, 'ubx': ubx, 'lbg': 0, 'ubg': 0}
 
     def return_best_u(self, initial_state, reference, Q=ca.DM([1, 1, 1]), R=ca.DM([1])):
+        # record the time
+        start_time = time()
         # set the initial state and the target state
         p = ca.vertcat(initial_state, reference, Q, R)
         self.args['p'] = p
@@ -132,4 +135,6 @@ class mpc_controller():
         u_opts = sol['x'][self.n_states*(self.N+1):]
         # return the optimal control input the first one
         u_opt = u_opts[0]
+        # print the time
+        self.times.append(time() - start_time)
         return u_opt
