@@ -1,5 +1,9 @@
 import casadi as ca
+import numpy as np
 from time import time
+
+
+def DM2Array(x): return np.array(x.full())
 
 
 class mpc_controller():
@@ -29,7 +33,7 @@ class mpc_controller():
         A = ca.DM([
             [0, 1, -1.6],
             [0, 0, -1],
-            [0, 0, -2.17391304]
+            [0, 0, 0.1971]
         ])
         # B matrix
         B = ca.DM([0, 0, -1.59130435])
@@ -137,4 +141,4 @@ class mpc_controller():
         u_opt = u_opts[0]
         # print the time
         self.times.append(time() - start_time)
-        return u_opt
+        return u_opt.full().flatten()[0]
