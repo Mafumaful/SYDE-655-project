@@ -18,6 +18,7 @@ class Vehicle1D():
         self.sv = ca.SX.sym('v')
         self.sa = ca.SX.sym('a')
         self.su = ca.SX.sym('u')
+
         # define the states of the system
         self.sstate = ca.vertcat(self.sx, self.sv, self.sa)
 

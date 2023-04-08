@@ -22,8 +22,8 @@
 \maketitle
 
 \begin{abstract}
-    This paper presents a method of using MPC into Adaptive Cruise Control (ACC). 
-    The MPC is a powerful tool for solving the optimal control problem. 
+    This paper presents a method of using MPC into Adaptive Cruise Control (ACC).
+    The MPC is a powerful tool for solving the optimal control problem.
     We present a linear model of the system. % we can provide a nonlinear model of the system later
 \end{abstract}
 
@@ -41,71 +41,75 @@
 % braking in emergency situations. Overall, ACC can make driving safer and more comfortable, 
 % while reducing the risk of accidents and improving fuel efficiency.~\cite{1337334}
 
-Adaptive Cruise Control (ACC) is a driver assistance system that helps maintain a safe 
-distance from the vehicle in front, especially in heavy traffic or on long trips. With 
-the advancement of commercial radar, lidar, and camera technologies, the popularity of 
-ACC systems has increased.
+Adaptive Cruise Control (ACC) is a driver assistance system that helps maintain
+a safe distance from the vehicle in front, especially in heavy traffic or on
+long trips. With the advancement of commercial radar, lidar, and camera
+technologies, the popularity of ACC systems has increased.
 
-Although Model Predictive Control (MPC)~\cite{rawlings2012postface} is a popular method for solving the ACC problem, 
-it still presents challenges due to the computational load involved in solving large-scale 
-optimization problems. Therefore, this paper proposes a method to linearize the ACC system 
-model and use the powerful CasADi toolbox\cite{Andersson2018} for solving the optimal control 
-problem.
+Although Model Predictive Control (MPC)~\cite{rawlings2012postface} is a
+popular method for solving the ACC problem, it still presents challenges due to
+the computational load involved in solving large-scale optimization problems.
+Therefore, this paper proposes a method to linearize the ACC system model and
+use the powerful CasADi toolbox\cite{Andersson2018} for solving the optimal
+control problem.
 
 \section{Formulation}
 
 \subsection{ACC system}
 % inter vhicle following error
-In this paper, there are three parameters that can be measured as below by the ACC system:
+In this paper, there are three parameters that can be measured as below by the
+ACC system:
 \begin{itemize}
-    \item $\Delta d$: Inter-vehicle distance following error, it represents the error between the 
-    desired inter-vehicle distance $d_r$ and actual inter-vehicle distance $d$. st. $\Delta d=d-d_r$. 
-    It's supposed to converge to zero if the ACC system works well.
-    \item $\Delta v$: The speed following error, it represents the speed error between the 
-    host vehicle speed $v_h$ and target vehicle speed $v_r$. st. $\Delta v=v_h-v_r$. 
-    It's supposed to converge to zero.
+    \item $\Delta d$: Inter-vehicle distance following error, it represents the error between the
+          desired inter-vehicle distance $d_r$ and actual inter-vehicle distance $d$. st. $\Delta d=d-d_r$.
+          It's supposed to converge to zero if the ACC system works well.
+    \item $\Delta v$: The speed following error, it represents the speed error between the
+          host vehicle speed $v_h$ and target vehicle speed $v_r$. st. $\Delta v=v_h-v_r$.
+          It's supposed to converge to zero.
     \item $\dot{v_h}$: the acceleration of the host vehicle. It's supposed to converge to
-    be zero if target vehicle speed $v_r$ is constant. Because it's a simple linear model, we
-    suppose the velocity of the target vehicle is constant.
+          be zero if target vehicle speed $v_r$ is constant. Because it's a simple linear model, we
+          suppose the velocity of the target vehicle is constant.
 \end{itemize}
 \subsection{Vehicle Dynamics}
-A vehicle dynamics model\cite{Takahama} will be used to describe the vehicle dynamics and to 
-build the MPC. The logitudinal dynamics of the host vehicle is given by (\ref{eq:logitudinal_d}):
+A vehicle dynamics model\cite{Takahama} will be used to describe the vehicle
+dynamics and to build the MPC. The logitudinal dynamics of the host vehicle is
+given by (\ref{eq:logitudinal_d}):
 
 \begin{equation}
     \begin{aligned}
-        m\dot{v_h}=F_f-r_{travel}\label{eq:logitudinal_d}\\
+        m\dot{v_h}=F_f-r_{travel}\label{eq:logitudinal_d} \\
     \end{aligned}
 \end{equation}
 
-\noindent where $m$ is the mass of the host vehicle, $F_f$ is the total traction force of the host vehicle, 
+\noindent where $m$ is the mass of the host vehicle, $F_f$ is the total traction force of the host vehicle,
 $r_{travel}$ is the rolling resistance of the host vehicle. The input/output relationship of
 the vehicle dynamics model is given by the differential equation (\ref{eq:actuation_d}):
 
 \begin{equation}
     \left\{\begin{array}{l}\label{eq:actuation_d}
-            \dot{x}_{f}=f_{a c t}\left(x_{f}, u\right) \\
-            a_{f}=h_{a c t}\left(x_{f}\right)
-            \end{array}\right.
+        \dot{x}_{f}=f_{a c t}\left(x_{f}, u\right) \\
+        a_{f}=h_{a c t}\left(x_{f}\right)
+    \end{array}\right.
 \end{equation}
 
-\noindent where $x_f=\mathbb{R}^{n_{f}}$ is the state of the vehicle dynamics model, $u$ is the input of the 
-vehicle system~(\ref{eq:actuation_d}) which is often a control input calculated by embeded 
+\noindent where $x_f=\mathbb{R}^{n_{f}}$ is the state of the vehicle dynamics model, $u$ is the input of the
+vehicle system~(\ref{eq:actuation_d}) which is often a control input calculated by embeded
 micro cruise controller. $r_{travel}$ is travel resistance which can be calculated by the
 following equation~(\ref{eq:travel_resistance}):
 
 \begin{equation}
     r_{travel}=r_{air}v_h^2 + r_{roll}(v_h)+r_{accel}\dot{v_h}+r_{grad}(\theta)\label{eq:travel_resistance}
 \end{equation}
-    
+
 \noindent where $r_{air}$ is the air resistance coefficient, $r_{roll}$ is the rolling resistance,
 the $r_{accel}$ is the acceleration resistance coefficient, $r_{grad}$ is the gradient resistance,
-$\theta$ is the slope angle. 
+$\theta$ is the slope angle.
 
 \subsection{State-Space Model for ACC System}
 
-To construct a plant model of the Adaptive Cruise Control (ACC) system, it is necessary to consider 
-both the desired inter-vehicle distance $d_r$ and the minimum inter-vehicle distance $d_0$.
+To construct a plant model of the Adaptive Cruise Control (ACC) system, it is
+necessary to consider both the desired inter-vehicle distance $d_r$ and the
+minimum inter-vehicle distance $d_0$.
 
 \begin{equation}
     d_r = T_{hw}v_h+d_0\label{eq:inter_vehicle_distance}
@@ -113,52 +117,54 @@ both the desired inter-vehicle distance $d_r$ and the minimum inter-vehicle dist
 
 \noindent where $T_{hw}$ is the headway time, $d_0$ is the minimum inter-vehicle distance.
 
-In this paper, the state variables of the ACC system are as $x=[\Delta d,\Delta v,x_f^T]^T$, 
-$x\in \mathbb{R}^{2+n_f}$, the state-space model is formulated as (\ref{eq:state_space_model}):
+In this paper, the state variables of the ACC system are as $x=[\Delta d,\Delta
+    v,x_f^T]^T$, $x\in \mathbb{R}^{2+n_f}$, the state-space model is formulated as
+(\ref{eq:state_space_model}):
 
 \begin{equation}
     \left\{\begin{array}{l}\label{eq:state_space_model}
         \dot{x}=f_{a c t}\left(x, u\right) + Gv + Hw \\
         y=Cx+Jv
-        \end{array}\right.
+    \end{array}\right.
 \end{equation}
 
-\noindent where 
+\noindent where
 $f_{a c t}(x,u)=\left[\begin{array}{c}
-    \Delta v-T_{h w} x_{f} \\
-    -h_{a c t}\left(x_{f}\right) \\
-    f_{a c t}\left(x_{f}, u\right)
-    \end{array}\right], \quad G=\left[\begin{array}{c}
-    T_{h w} / m \\
-    1 / m \\
-    0
-    \end{array}\right], \quad H=\left[\begin{array}{l}
-    0 \\
-    1 \\
-    0
-    \end{array}\right],C=\left[\begin{array}{lll}
-        1 & 0 & 0 \\
-        0 & 1 & 0 \\
-        0 & 0 & 1
+            \Delta v-T_{h w} x_{f}       \\
+            -h_{a c t}\left(x_{f}\right) \\
+            f_{a c t}\left(x_{f}, u\right)
+        \end{array}\right], \quad G=\left[\begin{array}{c}
+            T_{h w} / m \\
+            1 / m       \\
+            0
+        \end{array}\right], \quad H=\left[\begin{array}{l}
+            0 \\
+            1 \\
+            0
+        \end{array}\right],C=\left[\begin{array}{lll}
+            1 & 0 & 0 \\
+            0 & 1 & 0 \\
+            0 & 0 & 1
         \end{array}\right], \quad J=\left[\begin{array}{c}
-        0 \\
-        0 \\
-        -1 / m
-    \end{array}\right]$. 
+            0 \\
+            0 \\
+            -1 / m
+        \end{array}\right]$.
 
-\noindent where $u \in \mathbb{R}$ is the input of the plant and 
+\noindent where $u \in \mathbb{R}$ is the input of the plant and
 $y = [\Delta d, \Delta v, \dot{v_h}]^T \in \mathbb{R}^{3}$ is the output of the plant.
 
 \section{Optimal-based Control Method}
 
 \subsection{Controller Model Design}
-In order to reduce the computational cost, the ACC system model is linearized as (\ref{eq:linearized_model}):
+In order to reduce the computational cost, the ACC system model is linearized
+as (\ref{eq:linearized_model}):
 
 \begin{equation}
     \left\{\begin{array}{l}\label{eq:linearized_model}
         \dot{a_f}=A_f(t)a_f+B_f(t)u \\
         a_f=C_fx_f
-        \end{array}\right.
+    \end{array}\right.
 \end{equation}
 
 \noindent where the acceleration of the linearized model is $a_f\in \mathbb{R}$, the input of the
@@ -167,50 +173,53 @@ shown as (\ref{eq:linearized_m}):
 
 \begin{equation}
     \begin{array}{l}\label{eq:linearized_m}
-    A_{f}(t)=\left\{\begin{array}{ll}
-    -\frac{1}{T_{e n g}}, & \text { if } u(t) \geq a_{t h r_{-} o f f} \\
-    -\frac{1}{T_{b r k}}, & \text { if } u(t)<a_{t h r_{-} o f f}
-    \end{array}\right. \\
-    B_{f}(t)=\left\{\begin{array}{ll}
-    \frac{K_{e n g}(t)}{T_{e n g}}, & \text { if } u(t) \geq a_{t h r_{-} o f f} \\
-    \frac{K_{b r k}(t)}{T_{b r k}}, & \text { if } u(t)<a_{t h r_{-} o f f}
-    \end{array}\right. \\
-    C_{f}=1 .
+        A_{f}(t)=\left\{\begin{array}{ll}
+                            -\frac{1}{T_{e n g}}, & \text { if } u(t) \geq a_{t h r_{-} o f f} \\
+                            -\frac{1}{T_{b r k}}, & \text { if } u(t)<a_{t h r_{-} o f f}
+                        \end{array}\right.                                  \\
+        B_{f}(t)=\left\{\begin{array}{ll}
+                            \frac{K_{e n g}(t)}{T_{e n g}}, & \text { if } u(t) \geq a_{t h r_{-} o f f} \\
+                            \frac{K_{b r k}(t)}{T_{b r k}}, & \text { if } u(t)<a_{t h r_{-} o f f}
+                        \end{array}\right. \\
+        C_{f}=1 .
     \end{array}
 \end{equation}
 
-\noindent where $T_{e n g}$ is the constant of acceleration of acceleration engine, 
+\noindent where $T_{e n g}$ is the constant of acceleration of acceleration engine,
 $T_{b r k}$ is time constant of deceleration using brake, $a_{t h r_{-} o f f}$ is the threshold
 of acceleration, $K_{e n g}(t)$ and $K_{b r k}(t)$ are the gain of acceleration engine and brake
 respectively.
 
-In the system (\ref{eq:linearized_model}), the dynamics of the vehicle is simplified as a first-order
-delay system. The system has two modes:a acceleration mode and a deceleration mode. 
+In the system (\ref{eq:linearized_model}), the dynamics of the vehicle is
+simplified as a first-order delay system. The system has two modes:a
+acceleration mode and a deceleration mode.
 
-So the prediction model (\ref{eq:state_space_model}) can be simplified as (\ref{eq:prediction_m}).
+So the prediction model (\ref{eq:state_space_model}) can be simplified as
+(\ref{eq:prediction_m}).
 
 \begin{equation}
     \left\{\begin{array}{l}\label{eq:prediction_m}
         \dot{x}=A(t)x+B(t)u+Gv+Hw \\
         y=Cx+Jv
-        \end{array}\right.
+    \end{array}\right.
 \end{equation}
 
 \noindent where $x \in \mathbb{R}^3$ and $A(t)=\left[\begin{array}{ccc}
-    0 & 1 & -T_{h w} \\
-    0 & 0 & -1 \\
-    0 & 0 & A_{f}(t)
-    \end{array}\right], \quad B(t)=\left[\begin{array}{c}
-    0 \\
-    0 \\
-    B_{f}(t)
-    \end{array}\right]$.
+            0 & 1 & -T_{h w} \\
+            0 & 0 & -1       \\
+            0 & 0 & A_{f}(t)
+        \end{array}\right], \quad B(t)=\left[\begin{array}{c}
+            0 \\
+            0 \\
+            B_{f}(t)
+        \end{array}\right]$.
 \subsection{Optimization Problem}
 
 \section{Preliminary Results}
 \section{Conclusion}
 
-In this paper, we proposed a MPC controller for ACC system.
+In this paper, we proposed a MPC controller for ACC system. The simulation
+results show that the proposed controller can achieve the desired performance.
 
 \bibliographystyle{unsrt}
 \bibliography{citation}
