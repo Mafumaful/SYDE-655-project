@@ -44,18 +44,28 @@ us = []
 # main loop
 if __name__ == "__main__":
     for i in range(len(t)+1):
-        if i == 1:
-            diff_state[2] = 0.5
-        elif i == 200:
-            diff_state[2] = -1.5
+        # if i == 1:
+        #     diff_state[2] = 0.5
+        # elif i == 200:
+        #     diff_state[2] = -1.5
+
+        # preceding_vehicle.update(0)
+        # print(preceding_vehicle.state_value)
+        # diff_state[0] = host_vehicle.state_value[0]-preceding_vehicle.state_value[0]\
+        #     - (1.6*host_vehicle.state_value[1]+10)
+        # diff_state[1] = host_vehicle.state_value[1] - \
+        #     preceding_vehicle.state_value[1]
+        # diff_state[2] = host_vehicle.state_value[2]
+        # print('diff_state:', diff_state)
 
         u0 = mpc.return_best_u(diff_state, ref)
         print('u0:', u0)
         diff_state = diff_state+f(diff_state, u0)
-        host_vehicle.update(diff_state[2])
+        host_vehicle.update(u0)
         # print(preceding_vehicle.state_value)
         record_target(diff_state.full().tolist(), name="diff")
         plotter.record(u0, "u(m/s^2)", "diff")
+        print('host:', host_vehicle.state_value)
         record_target(host_vehicle.state_value.full().tolist(), name="host")
 
     plotter.save_graph()

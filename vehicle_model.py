@@ -25,7 +25,7 @@ class VehicleModel():
         # the increment of the states
         increment = A @ self.state @ dt + B @ u @ dt
         # calculate the increment of the states
-        self.f = ca.Function('f', [self.state, u, a_previous, dt], [increment])
+        self.f = ca.Function('f', [self.state, u, dt], [increment])
 
         # define the initial value of the state
         self.x_value = initial_state[0]
@@ -35,7 +35,7 @@ class VehicleModel():
 
     def update(self, u, dt=0.1):
         self.state_value = self.state_value + \
-            self.f(self.state_value, self.a_value, u, dt)
+            self.f(self.state_value, u, dt)
         self.a_value = self.state_value[2]
         self.v_value = self.state_value[1]
         self.x_value = self.state_value[0]
