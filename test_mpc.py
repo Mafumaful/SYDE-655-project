@@ -25,7 +25,7 @@ while ca.norm_2(state_init - state_ref) > 0.01:
     state_inits.append(state_init.full())
 
 # average time
-print('average time: ', np.mean(mpc.times))
+print('average calculate time: ', np.mean(mpc.times))
 
 for state_init in state_inits:
     [delta_d] = state_init[0]
