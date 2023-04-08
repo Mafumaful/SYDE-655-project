@@ -11,7 +11,8 @@ class mpc_controller():
         self.times = []
 
         # MPC variables
-        self.N = 10  # prediction horizon
+        self.P = 10  # prediction horizon
+        self.C = 6  # control horizon
         h = sampling_time  # sampling time
 
         # define the states value
@@ -33,10 +34,10 @@ class mpc_controller():
         A = ca.DM([
             [0, 1, -1.6],
             [0, 0, -1],
-            [0, 0, 0.1971]
+            [0, 0, -2.1]
         ])
         # B matrix
-        B = ca.DM([0, 0, -1.59130435])
+        B = ca.DM([0, 0, 1.59130435])
         # the increment of the states
         increment = A @ states @ h + B @ u @ h
         # calculate the increment of the states
@@ -46,8 +47,8 @@ class mpc_controller():
         # current initial state and the target state and Q and R
         P = ca.SX.sym('P', self.n_states+self.n_states +
                       self.n_states+self.n_controls)
-        X = ca.SX.sym('X', self.n_states, (self.N+1))
-        U = ca.SX.sym('U', self.n_controls, self.N)
+        X = ca.SX.sym('X', self.n_states, (self.P+1))
+        U = ca.SX.sym('U', self.n_controls, self.C)
 
         # Q and R is the weight of the cost function, we take it from P
         # the first 3 number is the initial state
@@ -65,11 +66,11 @@ class mpc_controller():
 
         # the cost function and the constraint funtion
         obj = 0
-        for k in range(self.N):
+        for k in range(self.P):
             # current state
             st = X[:, k]
             # current control
-            ctrl = U[:, k]
+            ctrl = U[:, min(k, self.C-1)]
 
             # the cost function
             obj = obj + \
@@ -82,6 +83,12 @@ class mpc_controller():
             next_st = st + self.f(st, ctrl)
             # the constraint function
             g = ca.vertcat(g, st_next - next_st)
+
+        for k in range(self.C):
+            # the control input
+            ctrl = U[:, k]
+            # the constraint function
+            g = ca.vertcat(g, ctrl)
 
         # opt variables
         self.OPT_variables = ca.vertcat(
@@ -107,36 +114,46 @@ class mpc_controller():
         lbx = ca.DM.zeros(self.OPT_variables.shape)
         ubx = ca.DM.zeros(self.OPT_variables.shape)
 
-        lbx[0:self.n_states*(self.N+1):self.n_states] = - \
+        lbx[0:self.n_states*(self.P+1):self.n_states] = - \
             ca.inf  # delta_d lower bound
-        lbx[1:self.n_states*(self.N+1):self.n_states] = - \
+        lbx[1:self.n_states*(self.P+1):self.n_states] = - \
             ca.inf  # delta_v lower bound
-        lbx[2:self.n_states*(self.N+1):self.n_states] = - \
+        lbx[2:self.n_states*(self.P+1):self.n_states] = - \
             ca.inf  # a_h lower bound
 
         # delta_d upper bound
-        ubx[0:self.n_states*(self.N+1):self.n_states] = ca.inf
+        ubx[0:self.n_states*(self.P+1):self.n_states] = ca.inf
         # delta_v upper bound
-        ubx[1:self.n_states*(self.N+1):self.n_states] = ca.inf
+        ubx[1:self.n_states*(self.P+1):self.n_states] = ca.inf
         # a_h upper bound
-        ubx[2:self.n_states*(self.N+1):self.n_states] = ca.inf
+        ubx[2:self.n_states*(self.P+1):self.n_states] = ca.inf
 
-        lbx[self.n_states*(self.N+1):] = -2.5  # u lower bound
-        ubx[self.n_states*(self.N+1):] = 1.5  # u upper bound
+        lbx[self.n_states*(self.P+1):] = -2.5  # u lower bound
+        ubx[self.n_states*(self.P+1):] = 1.5  # u upper bound
 
-        self.args = {'lbx': lbx, 'ubx': ubx, 'lbg': 0, 'ubg': 0}
+        # set the boundaries
+        lbg = ca.DM.zeros(self.n_states*(self.P+1)+self.n_controls*self.C)
+        ubg = ca.DM.zeros(self.n_states*(self.P+1)+self.n_controls*self.C)
+
+        # set the arguments
+        lbg[self.n_states*(self.P+1):] = -1.5
+        ubg[self.n_states*(self.P+1):] = 1.5
+
+        self.args = {'lbx': lbx, 'ubx': ubx, 'lbg': lbg, 'ubg': ubg}
 
     def return_best_u(self, initial_state, reference, Q=ca.DM([1, 1, 1]), R=ca.DM([1])):
         # record the time
         start_time = time()
+        x0 = ca.repmat(initial_state, 1, self.P+1)
         # set the initial state and the target state
         p = ca.vertcat(initial_state, reference, Q, R)
         self.args['p'] = p
-        self.args['x0'] = ca.DM.zeros(self.OPT_variables.shape)
+        self.args['x0'] = ca.vertcat(ca.reshape(
+            x0, -1, 1), ca.DM.zeros(self.n_controls*self.C, 1))
         # solve the problem
         sol = self.solver(**self.args)
         # get the optimal control input
-        u_opts = sol['x'][self.n_states*(self.N+1):]
+        u_opts = sol['x'][self.n_states*(self.P+1):]
         # return the optimal control input the first one
         u_opt = u_opts[0]
         # print the time
