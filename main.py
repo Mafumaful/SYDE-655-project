@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import casadi as ca
+from time import time
 
 # import the modules
 from plot import Plotter
@@ -36,8 +37,10 @@ def record_target(state, name):
     plotter.record(state[1], "v(m/s)", name)
     plotter.record(state[2], "a(m/s^2)", name)
 
-# create a acceleration reference of the preceding vehicle
 
+# create a acceleration reference of the preceding vehicle
+Q = ca.DM([50, 1, 1])
+R = ca.DM([1])
 
 us = []
 times = []
@@ -45,8 +48,12 @@ times = []
 # main loop
 if __name__ == "__main__":
     for i in range(len(t)+1):
+        start_time = time()
         # update the optimal control input
-        u0 = mpc.return_best_u(diff_state, ref)
+        print('-----------------------'*5)
+        print('Q:', Q)
+        print('R:', R)
+        u0 = mpc.return_best_u(diff_state, ref, Q, R)
         times.append(mpc.time)
         # print control input
         print('u0:', u0)
@@ -58,12 +65,12 @@ if __name__ == "__main__":
         [[dd], [dv], [ah]] = mpc_state
         print('mpc_state:', mpc_state)
         # update the Q and R according to the desired performance
-        if dd < 0 and dv > 0:
-            mpc.__init__(P=50)
-            Q = ca.DM([50, 1, 1])
+        if dd < 0 or dv > 0:
+            mpc.__init__(P=5)
+            Q = ca.DM([500, 0.1, 0.1])
             R = ca.DM([0.1])
         else:
-            mpc.__init__(P=100)
+            mpc.__init__(P=10)
             Q = ca.DM([1, 1, 1])
             R = ca.DM([1])
 
@@ -71,6 +78,7 @@ if __name__ == "__main__":
         record_target(mpc_state, name="diff")
         plotter.record(u0, "u(m/s^2)", "diff")
         record_target(host_vehicle.state_value.full().tolist(), name="host")
-        print('host:', host_vehicle.state_value)
+        # print('host:', host_vehicle.state_value)
+        print('iteration time:', time()-start_time)
     plotter.save_graph()
     print('the average time of each iteration:', np.mean(times))
