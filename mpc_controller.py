@@ -7,11 +7,10 @@ def DM2Array(x): return np.array(x.full())
 
 
 class mpc_controller():
-    def __init__(self, sampling_time=0.1):
-        self.times = []
-
+    def __init__(self, P=100, sampling_time=0.1):
+        self.time = 0
         # MPC variables
-        self.P = 10  # prediction horizon
+        self.P = P  # prediction horizon
         self.C = 6  # control horizon
         h = sampling_time  # sampling time
 
@@ -34,7 +33,7 @@ class mpc_controller():
         A = ca.DM([
             [0, 1, -1.6],
             [0, 0, -1],
-            [0, 0, -2.1]
+            [0, 0, -2.17]
         ])
         # B matrix
         B = ca.DM([0, 0, 1.59130435])
@@ -141,7 +140,7 @@ class mpc_controller():
 
         self.args = {'lbx': lbx, 'ubx': ubx, 'lbg': lbg, 'ubg': ubg}
 
-    def return_best_u(self, initial_state, reference, Q=ca.DM([1, 1, 1]), R=ca.DM([1])):
+    def return_best_u(self, initial_state, reference, Q=ca.DM([50, 1, 1]), R=ca.DM([1])):
         # record the time
         start_time = time()
         x0 = ca.repmat(initial_state, 1, self.P+1)
@@ -157,5 +156,5 @@ class mpc_controller():
         # return the optimal control input the first one
         u_opt = u_opts[0]
         # print the time
-        self.times.append(time() - start_time)
+        self.time = time()-start_time
         return u_opt.full().flatten()[0]
