@@ -7,11 +7,11 @@ def DM2Array(x): return np.array(x.full())
 
 
 class mpc_controller():
-    def __init__(self, P=100, sampling_time=0.1):
+    def __init__(self, P=100, C=6, sampling_time=0.1):
         self.time = 0
         # MPC variables
         self.P = P  # prediction horizon
-        self.C = 6  # control horizon
+        self.C = C  # control horizon
         h = sampling_time  # sampling time
 
         # define the states value
