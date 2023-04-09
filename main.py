@@ -18,7 +18,7 @@ t = np.arange(0, t_end, t_cont)
 plotter = Plotter(t)
 
 # initialize the vehicle
-diff_state = ca.DM([10, 5, 3])
+diff_state = ca.DM([10, -5, 3])
 ref = ca.DM([0, 0, 0])
 
 h_state = [0, 0, 0]
@@ -40,7 +40,7 @@ def record_target(state, name):
 
 # create a acceleration reference of the preceding vehicle
 Q = ca.DM([50, 1, 1])
-R = ca.DM([1])
+R = ca.DM([0.1])
 
 us = []
 times = []
@@ -57,7 +57,11 @@ if __name__ == "__main__":
         times.append(mpc.time)
         # print control input
         print('u0:', u0)
-        diff_state = diff_state+f(diff_state, u0)
+        # added a random disturbance
+        # disturbance = ca.DM([0, 0, random.uniform(-0.1, 0.1)])
+        disturbance = ca.DM([0, 0, 0])
+        # disturbance = ca.DM([0, 0, 0.1])
+        diff_state = diff_state+f(diff_state, u0) + disturbance
         host_vehicle.update(u0)
 
         # update Q, R and prediction horizon according to the state
@@ -65,18 +69,19 @@ if __name__ == "__main__":
         [[dd], [dv], [ah]] = mpc_state
         print('mpc_state:', mpc_state)
         # update the Q and R according to the desired performance
-        if dd < 0 or dv > 0:
-            mpc.__init__(P=5)
-            Q = ca.DM([500, 0.1, 0.1])
-            R = ca.DM([0.1])
-        else:
-            mpc.__init__(P=10)
-            Q = ca.DM([1, 1, 1])
-            R = ca.DM([1])
+        # if dd > 2 or dd < -2:
+        #     mpc.__init__(P=50, C=5)
+        #     Q = ca.DM([50, 1, 1])
+        #     R = ca.DM([0.1])
+        # else:
+        #     mpc.__init__(P=100, C=50)
+        #     Q = ca.DM([1, 1, 1])
+        #     R = ca.DM([1])
 
         # record the data to plot
-        record_target(mpc_state, name="diff")
-        plotter.record(u0, "u(m/s^2)", "diff")
+        name = "common mpc"
+        record_target(mpc_state, name=name)
+        plotter.record(u0, "u", name)
         record_target(host_vehicle.state_value.full().tolist(), name="host")
         # print('host:', host_vehicle.state_value)
         print('iteration time:', time()-start_time)

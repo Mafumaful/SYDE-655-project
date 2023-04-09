@@ -10,8 +10,6 @@
 
 \usepackage{upgreek}
 
-\graphicspath{{images/}}
-
 % according devide the tag
 \numberwithin{equation}{section}
 
@@ -41,16 +39,31 @@
 % braking in emergency situations. Overall, ACC can make driving safer and more comfortable, 
 % while reducing the risk of accidents and improving fuel efficiency.~\cite{1337334}
 
-Adaptive Cruise Control (ACC) is a driver assistance system that helps maintain
-a safe distance from the vehicle in front, especially in heavy traffic or on
-long trips. With the advancement of commercial radar, lidar, and camera
-technologies, the popularity of ACC systems has increased.
+Adaptive Cruise Control (ACC) is an advanced driver assistance system designed
+to automatically regulate a vehicle's speed in order to maintain a safe
+following distance from the vehicle ahead. By utilizing a combination of
+sensors, such as radar or LiDAR, and cameras, the ACC system continuously
+monitors the relative velocity and distance between the two vehicles, as
+illustrated in the accompanying figure. When the system detects that the
+vehicle ahead is slowing down or if the following distance becomes too short,
+it automatically adjusts the vehicle's speed by applying the brakes or reducing
+throttle input. Conversely, when the traffic flow resumes or the distance
+increases, the system will accelerate the vehicle back to its pre-set speed.
+This not only enhances driving comfort and convenience but also contributes to
+improved road safety and traffic flow efficiency.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.5\textwidth]{host vehicle and preceding vehicle.png}
+    \caption{Adaptive Cruise Control System}
+    \label{fig:structure}
+\end{figure}
 
 Although Model Predictive Control (MPC)~\cite{rawlings2012postface} is a
 popular method for solving the ACC problem, it still presents challenges due to
 the computational load involved in solving large-scale optimization problems.
 Therefore, this paper proposes a method to linearize the ACC system model and
-use the powerful CasADi toolbox\cite{Andersson2018} for solving the optimal
+use the powerful CasADi toolbox~\cite{Andersson2018} for solving the optimal
 control problem.
 
 \section{Formulation}
@@ -60,7 +73,7 @@ control problem.
 In this paper, there are three parameters that can be measured as below by the
 ACC system:
 \begin{itemize}
-    \item $\Delta d$: Inter-vehicle distance following error, it represents the error between the
+    \item $\Delta d$: Inter-vehicle distance following error which is shown in Figure~\ref{fig:structure}, it represents the error between the
           desired inter-vehicle distance $d_r$ and actual inter-vehicle distance $d$. st. $\Delta d=d-d_r$.
           It's supposed to converge to zero if the ACC system works well.
     \item $\Delta v$: The speed following error, it represents the speed error between the
@@ -213,15 +226,133 @@ So the prediction model (\ref{eq:state_space_model}) can be simplified as
             0 \\
             B_{f}(t)
         \end{array}\right]$.
-\subsection{Optimization Problem}
+\subsection{Optimization Problem of MPC}
 
-In
+MPC is considered suboptimal compared to optimal control strategies, as it
+provides an approximate solution to the optimal control problem. This
+suboptimality arises from factors such as the use of a finite prediction
+horizon, which may not fully account for the consequences of control actions;
+inaccuracies in the system's mathematical model, which can lead to suboptimal
+predictions and control decisions; discretization and approximations required
+for representing constraints or nonlinear dynamics; and computational
+constraints in real-time applications, necessitating the use of simplified
+optimization algorithms or problem formulations.
 
-\section{Preliminary Results}
+While comparing MPC's performance to that of an optimal controller can be
+challenging, especially for complex or high-dimensional systems, the
+qualitative argument for its suboptimal nature remains valid. Despite being
+suboptimal, MPC continues to be widely adopted in practice due to its practical
+advantages and overall satisfactory performance.
+
+Because the model of the MPC system in this paper is linear, so it can be
+considered a convex problem\cite{LIMON20082382}. Convex optimization problems
+have a unique global minimum and can usually be solved efficiently using linear
+programming (for linear objective functions) or quadratic programming (for
+quadratic objective functions) techniques.
+
+% In this paper, the MPC controller is designed to minimize the following
+
+\subsection{MPC Controller Design}
+
+The relationship between the prediction horizon and the controller performance
+is crucial, as it impacts the controller's ability to respond to changes in the
+system and its overall effectiveness.
+\begin{itemize}
+    \item Short prediction horizon: A short prediction horizon may lead to faster
+          computation times since the optimization problem has fewer variables and
+          constraints. However, it may result in suboptimal control performance, as the
+          controller has limited foresight and may not adequately account for future
+          disturbances, constraints, or desired setpoints. This can lead to overly
+          aggressive or reactive control actions.
+
+    \item Long prediction horizon: A longer prediction horizon allows the controller to
+          better anticipate future events and make more informed control decisions. This
+          can lead to improved performance, smoother control actions, and a better
+          ability to handle disturbances and constraints. However, longer prediction
+          horizons come at the cost of increased computational complexity, which may
+          result in slower optimization and potentially reduced control update rates.
+          Moreover, the quality of the model and the predictability of the system may
+          degrade over longer horizons, leading to diminishing returns on controller
+          performance.
+\end{itemize}
+
+According to the law above, we prefer to have a shorter horizon when the
+distance is long because we need more aggressive control actions to achieve the
+desired distance. This is also a trade-off between the computational cost and
+the performance of the controller.
+
+When the distance is short, we prefer to have a longer horizon because we need
+to consider more future events and make more informed control decisions. And we
+need to consider the confort of the driver.
+
+So we designed the strategy of the MPC controller as the figure
+\ref{fig:mpc_design}.
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.5\textwidth]{ACC MPC/mpc design.png}
+    \caption{The structure of the MPC controller}
+    \label{fig:mpc_design}
+\end{figure}
+
+Because the model dynamics $\dot{x}=f(x,u)$ are unstable in the prediction
+horizon, we need to update the state $x$ in each time step. So we use the
+multiple shooting method to solve the optimization problem.
+
+In multiple shooting method, the model dynamics are discretized on a uniform
+time grid $t_0, ..., t_N$ by numerical integration over the time intervals
+$[t_i, t_{i+1}]$. The control input $U$ is assumed to be constant over each
+interval, and the state $X$ is updated at the end of each interval. The
+inequality constraints are enforced at the end of each interval.
+
+Multiple shooting is a numerical optimization technique used to solve optimal
+control problems, including those arising in Model Predictive Control (MPC).
+The main idea behind multiple shooting is to divide the prediction horizon into
+several smaller intervals or subproblems, and then solve these subproblems
+simultaneously while ensuring continuity of the states and inputs across the
+intervals. In this way, the optimization problem is decomposed into a sequence
+of smaller problems, each of which can be solved efficiently using standard
+optimization techniques.
+
+\section{Numerical Simulation and Results}
+
+Numerical simulations were performed to evaluate the performance of the
+proposed MPC controller. The control performance was compared with the
+performance of a method using single shooting method and a method using common
+MPC controller.
+
+In the simulation, the controller's sampling time is 0.1s, the control input
+and its change rate ahve the lower and upper limit $u \in [-2.5,1.5]$ and
+$\Delta u \in [-1.5,1.5]$, respectively. Table \ref{tab:parameters} shows the
+parameters of the ACC system.
+
+% insert a table
+\begin{table}[h!]
+    \centering
+    \caption{The parameters of the ACC system}
+    \begin{tabular}{|c|c|}
+        \hline
+        Parameter & Value \\
+        \hline
+        $T_{eng}$ & 0.46  \\
+        \hline
+        $T_{eng}$ & 0.732 \\
+        \hline
+        $h_w$     & 1.6
+    \end{tabular}
+    \label{tab:parameters}
+\end{table}
+
+Python CasADi were used in the simulation. The optimization problem is solved
+by IPOPT solver in CasADi.
+
 \section{Conclusion}
 
 In this paper, we proposed a MPC controller for ACC system. The simulation
 results show that the proposed controller can achieve the desired performance.
+
+What's more, we can adjusts the prediction horizon and control horizon of the
+MPC controller according to the distance between the vehicle and the front
+vehicle.
 
 \bibliographystyle{unsrt}
 \bibliography{citation}

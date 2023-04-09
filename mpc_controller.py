@@ -114,7 +114,7 @@ class mpc_controller():
         ubx = ca.DM.zeros(self.OPT_variables.shape)
 
         lbx[0:self.n_states*(self.P+1):self.n_states] = - \
-            ca.inf  # delta_d lower bound
+            5  # delta_d lower bound
         lbx[1:self.n_states*(self.P+1):self.n_states] = - \
             ca.inf  # delta_v lower bound
         lbx[2:self.n_states*(self.P+1):self.n_states] = - \

@@ -7,4 +7,9 @@ __pycache__
 *.fls
 *.bbl
 *.blg
+*.toc
+*.lof
+*.lot
+*.gz
+*.dvi
 reference paper
