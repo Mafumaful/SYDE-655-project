@@ -23,6 +23,7 @@ class Plotter(object):
         print("saving the graph...")
         for key, value in self.dictionarys.items():
             plt.figure()
+            plt.title(key)
             for legend, data in value.items():
                 plt.plot(self.time_stamp, data, label=legend)
             plt.xlabel("time")
