@@ -20,9 +20,15 @@
 \maketitle
 
 \begin{abstract}
-    This paper presents a method of using MPC into Adaptive Cruise Control (ACC).
-    The MPC is a powerful tool for solving the optimal control problem.
-    We present a linear model of the system. % we can provide a nonlinear model of the system later
+    This paper proposes a novel approach to implementing Adaptive Cruise Control (ACC)
+    using Model Predictive Control (MPC). MPC is a well-established technique for solving
+    optimal control problems, and we demonstrate how it can be applied to the design of ACC
+    systems. Specifically, we develop a linear model of the system and modify the MPC algorithm
+    using a multiple shooting method and a technique for dynamically adjusting the MPC parameters
+    during the optimization process. Our results demonstrate the effectiveness of this approach in
+    achieving smooth and efficient vehicle control in a range of driving scenarios. Overall, this
+    work offers a valuable contribution to the field of autonomous driving, providing a new
+    perspective on the design of ACC systems.
 \end{abstract}
 
 \section{Problem Discreption}
@@ -226,6 +232,9 @@ So the prediction model (\ref{eq:state_space_model}) can be simplified as
             0 \\
             B_{f}(t)
         \end{array}\right]$.
+
+We use the prediction model based on \ref{eq:prediction_m} and assume that the
+disturbance $v$ and $w$ are unmeasurable.
 \subsection{Optimization Problem of MPC}
 
 MPC is considered suboptimal compared to optimal control strategies, as it
@@ -298,12 +307,6 @@ Because the model dynamics $\dot{x}=f(x,u)$ are unstable in the prediction
 horizon, we need to update the state $x$ in each time step. So we use the
 multiple shooting method to solve the optimization problem.
 
-In multiple shooting method, the model dynamics are discretized on a uniform
-time grid $t_0, ..., t_N$ by numerical integration over the time intervals
-$[t_i, t_{i+1}]$. The control input $U$ is assumed to be constant over each
-interval, and the state $X$ is updated at the end of each interval. The
-inequality constraints are enforced at the end of each interval.
-
 Multiple shooting is a numerical optimization technique used to solve optimal
 control problems, including those arising in Model Predictive Control (MPC).
 The main idea behind multiple shooting is to divide the prediction horizon into
@@ -313,8 +316,13 @@ intervals. In this way, the optimization problem is decomposed into a sequence
 of smaller problems, each of which can be solved efficiently using standard
 optimization techniques.
 
-\section{Numerical Simulation and Results}
+In multiple shooting method, the model dynamics are discretized on a uniform
+time grid $t_0, ..., t_N$ by numerical integration over the time intervals
+$[t_i, t_{i+1}]$. The control input $U$ is assumed to be constant over each
+interval, and the state $X$ is updated at the end of each interval. The
+inequality constraints are enforced at the end of each interval.
 
+\section{Numerical Simulation and Results}
 Numerical simulations were performed to evaluate the performance of the
 proposed MPC controller. The control performance was compared with the
 performance of a method using single shooting method and a method using common
@@ -345,6 +353,55 @@ parameters of the ACC system.
 Python CasADi were used in the simulation. The optimization problem is solved
 by IPOPT solver in CasADi.
 
+In the figure \ref{fig:adaptive_mpc} and figure \ref{fig:common_mpc}, the
+common MPC is more aggressive than the proposed MPC when the car are very close
+to the desired distance which may cause the driver uncomfortable.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.5\textwidth]{ACC MPC/proposed mpc.png}
+    \caption{the performance of proposed MPC}
+    \label{fig:adaptive_mpc}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.5\textwidth]{ACC MPC/common mpc.png}
+    \caption{the performance of common MPC}
+    \label{fig:common_mpc}
+\end{figure}
+
+In the figure \ref{fig:proposed_mpc_with_dis} and figure
+\ref{fig:common_mpc_with_dis}, the common MPC is more sensitive to the
+disturbance than the proposed MPC and becomes unstable when the car is closed
+to the desired distance. The proposed MPC can still keep the car close to the
+desired distance when the disturbance is large.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.5\textwidth]{ACC MPC/proposed mpc with disturbance.png}
+    \caption{the performance of proposed MPC with disturbance}
+    \label{fig:proposed_mpc_with_dis}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.5\textwidth]{ACC MPC/common mpc with disturbance.png}
+    \caption{the performance of common MPC with disturbance}
+    \label{fig:common_mpc_with_dis}
+\end{figure}
+
+As we can see from the figure \ref{fig:calculate_time}, the time consumption of
+the proposed MPC with a multiple shooting approach is much less than that of
+the common MPC with a single shooting approach.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.5\textwidth]{ACC MPC/output.png}
+    \caption{calculation time}
+    \label{fig:calculate_time}
+\end{figure}
+
 \section{Conclusion}
 
 In this paper, we proposed a MPC controller for ACC system. The simulation
@@ -352,7 +409,8 @@ results show that the proposed controller can achieve the desired performance.
 
 What's more, we can adjusts the prediction horizon and control horizon of the
 MPC controller according to the distance between the vehicle and the front
-vehicle.
+vehicle. By choosing multiple shooting method, the calculation time of the MPC
+controller is reduced.
 
 \bibliographystyle{unsrt}
 \bibliography{citation}

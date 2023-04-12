@@ -39,6 +39,7 @@ def record_target(state, name):
 
 
 # create a acceleration reference of the preceding vehicle
+# mpc.__init__(P=100, C=50)
 Q = ca.DM([50, 1, 1])
 R = ca.DM([0.1])
 
@@ -69,17 +70,17 @@ if __name__ == "__main__":
         [[dd], [dv], [ah]] = mpc_state
         print('mpc_state:', mpc_state)
         # update the Q and R according to the desired performance
-        # if dd > 2 or dd < -2:
-        #     mpc.__init__(P=50, C=5)
-        #     Q = ca.DM([50, 1, 1])
-        #     R = ca.DM([0.1])
-        # else:
-        #     mpc.__init__(P=100, C=50)
-        #     Q = ca.DM([1, 1, 1])
-        #     R = ca.DM([1])
+        if dd > 2 or dd < -2:
+            mpc.__init__(P=50, C=5)
+            Q = ca.DM([50, 1, 1])
+            R = ca.DM([0.1])
+        else:
+            mpc.__init__(P=100, C=50)
+            Q = ca.DM([1, 1, 1])
+            R = ca.DM([1])
 
         # record the data to plot
-        name = "common mpc"
+        name = "proposed mpc with disturbance"
         record_target(mpc_state, name=name)
         plotter.record(u0, "u", name)
         record_target(host_vehicle.state_value.full().tolist(), name="host")
@@ -87,3 +88,6 @@ if __name__ == "__main__":
         print('iteration time:', time()-start_time)
     plotter.save_graph()
     print('the average time of each iteration:', np.mean(times))
+    import pickle
+    with open('times.pkl', 'wb') as f:
+        pickle.dump(times, f)
