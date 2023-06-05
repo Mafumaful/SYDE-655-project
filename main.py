@@ -80,14 +80,8 @@ if __name__ == "__main__":
             R = ca.DM([1])
 
         # record the data to plot
-        name = "proposed mpc with disturbance"
+        name = "proposed mpc"
         record_target(mpc_state, name=name)
         plotter.record(u0, "u", name)
-        record_target(host_vehicle.state_value.full().tolist(), name="host")
-        # print('host:', host_vehicle.state_value)
-        print('iteration time:', time()-start_time)
     plotter.save_graph()
     print('the average time of each iteration:', np.mean(times))
-    import pickle
-    with open('times.pkl', 'wb') as f:
-        pickle.dump(times, f)
