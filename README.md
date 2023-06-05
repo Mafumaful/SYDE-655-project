@@ -1,6 +1,5 @@
 # Aim
 
-The aim of the project is designing a MPC Controller for a ACC system.
+The aim of the project is designing a MPC Controller for a ACC(Adaptive Cruise Control) system.
 
-project report:
-[Model Predictive Control in Adaptive Cruise Control](https://github.com/Mafumaful/SYDE-655-project/blob/vehicle_model/paper/latex_build/Model%20predictive%20control%20in%20ACC.pdf)
+The input of the system is desire distance and the state of the car, the output is the acceleration signal of the host vehicle.
